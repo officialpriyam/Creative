@@ -18,6 +18,17 @@ export interface CommandResult {
   success: boolean;
 }
 
+export type SandboxCommand =
+  | string
+  | {
+      cmd: string;
+      args?: string[];
+      cwd?: string;
+      env?: Record<string, string>;
+      detached?: boolean;
+      sudo?: boolean;
+    };
+
 export interface SandboxProviderConfig {
   e2b?: {
     apiKey: string;
@@ -42,7 +53,7 @@ export abstract class SandboxProvider {
   }
 
   abstract createSandbox(): Promise<SandboxInfo>;
-  abstract runCommand(command: string): Promise<CommandResult>;
+  abstract runCommand(command: SandboxCommand): Promise<CommandResult>;
   abstract writeFile(path: string, content: string): Promise<void>;
   abstract readFile(path: string): Promise<string>;
   abstract listFiles(directory?: string): Promise<string[]>;

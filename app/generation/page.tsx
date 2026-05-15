@@ -2182,7 +2182,8 @@ Tip: I automatically detect and install npm packages from your code imports (lik
     try {
       const response = await fetch('/api/create-zip', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sandboxId: sandboxData.sandboxId })
       });
       
       const data = await response.json();

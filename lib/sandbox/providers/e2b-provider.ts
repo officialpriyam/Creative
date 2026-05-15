@@ -1,7 +1,15 @@
 import { Sandbox } from '@e2b/code-interpreter';
-import { SandboxProvider, SandboxInfo, CommandResult } from '../types';
+import { SandboxProvider, SandboxInfo, CommandResult, SandboxCommand } from '../types';
 // SandboxProviderConfig available through parent class
 import { appConfig } from '@/config/app.config';
+
+function shellQuote(value: string): string {
+  if (/^[A-Za-z0-9_./:=@%+-]+$/.test(value)) {
+    return value;
+  }
+
+  return `'${value.replace(/'/g, `'\\''`)}'`;
+}
 
 export class E2BProvider extends SandboxProvider {
   private existingFiles: Set<string> = new Set();
@@ -70,21 +78,27 @@ export class E2BProvider extends SandboxProvider {
     }
   }
 
-  async runCommand(command: string): Promise<CommandResult> {
+  async runCommand(command: SandboxCommand): Promise<CommandResult> {
     if (!this.sandbox) {
       throw new Error('No active sandbox');
     }
 
+    const commandText = typeof command === 'string'
+      ? command
+      : [command.cmd, ...(command.args || [])].map(shellQuote).join(' ');
+    const cwd = typeof command === 'string'
+      ? '/home/user/app'
+      : command.cwd || '/home/user/app';
     
     const result = await this.sandbox.runCode(`
       import subprocess
       import os
 
-      os.chdir('/home/user/app')
-      result = subprocess.run(${JSON.stringify(command.split(' '))}, 
+      os.chdir(${JSON.stringify(cwd)})
+      result = subprocess.run(${JSON.stringify(commandText)}, 
                             capture_output=True, 
                             text=True, 
-                            shell=False)
+                            shell=True)
 
       print("STDOUT:")
       print(result.stdout)

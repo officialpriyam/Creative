@@ -1,5 +1,5 @@
 import { Sandbox } from '@vercel/sandbox';
-import { SandboxProvider, SandboxInfo, CommandResult } from '../types';
+import { SandboxProvider, SandboxInfo, CommandResult, SandboxCommand } from '../types';
 // SandboxProviderConfig available through parent class
 
 export class VercelProvider extends SandboxProvider {
@@ -61,25 +61,30 @@ export class VercelProvider extends SandboxProvider {
     }
   }
 
-  async runCommand(command: string): Promise<CommandResult> {
+  async runCommand(command: SandboxCommand): Promise<CommandResult> {
     if (!this.sandbox) {
       throw new Error('No active sandbox');
     }
 
     
     try {
-      // Parse command into cmd and args (matching PR syntax)
-      const parts = command.split(' ');
-      const cmd = parts[0];
-      const args = parts.slice(1);
-      
-      // Vercel uses runCommand with cmd and args object (based on PR)
-      const result = await this.sandbox.runCommand({
-        cmd: cmd,
-        args: args,
-        cwd: '/vercel/sandbox',
-        env: {}
-      });
+      const commandOptions = typeof command === 'string'
+        ? {
+            cmd: 'sh',
+            args: ['-lc', command],
+            cwd: '/vercel/sandbox',
+            env: {},
+          }
+        : {
+            cmd: command.cmd,
+            args: command.args || [],
+            cwd: command.cwd || '/vercel/sandbox',
+            env: command.env || {},
+            detached: command.detached,
+            sudo: command.sudo,
+          };
+
+      const result = await this.sandbox.runCommand(commandOptions);
       
       // Handle stdout and stderr - they might be functions in Vercel SDK
       let stdout = '';
