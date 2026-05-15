@@ -25,6 +25,12 @@ import {
 } from '@/lib/icons';
 import { motion } from 'framer-motion';
 import CodeApplicationProgress, { type CodeApplicationState } from '@/components/CodeApplicationProgress';
+import {
+  applyCodeToWebContainer,
+  createWebContainerSandbox,
+  exportWebContainerZip,
+  listWebContainerFiles,
+} from '@/lib/webcontainer-runtime';
 
 interface SandboxData {
   sandboxId: string;
@@ -78,6 +84,7 @@ function AISandboxPage() {
   const [aiEnabled] = useState(true);
   const searchParams = useSearchParams();
   const router = useRouter();
+  const isWebContainerRuntime = appConfig.sandboxProvider === 'webcontainer';
   const [aiModel, setAiModel] = useState(() => {
     const modelParam = searchParams.get('model');
     return appConfig.ai.availableModels.includes(modelParam || '') ? modelParam! : appConfig.ai.defaultModel;
@@ -510,6 +517,11 @@ function AISandboxPage() {
   };
 
   const checkSandboxStatus = async () => {
+    if (isWebContainerRuntime) {
+      updateStatus(sandboxData ? 'WebContainer active' : 'WebContainer not started', !!sandboxData);
+      return;
+    }
+
     try {
       const response = await fetch('/api/sandbox-status');
       const data = await response.json();
@@ -565,6 +577,41 @@ function AISandboxPage() {
     setScreenshotError(null);
     
     try {
+      if (isWebContainerRuntime) {
+        const data = await createWebContainerSandbox((message) => {
+          log(message);
+        });
+
+        sandboxCreationRef.current = false;
+        console.log('[createSandbox] WebContainer ready:', data);
+        setSandboxData(data);
+        updateStatus('WebContainer active', true);
+        setStructureContent('WebContainer project ready');
+        log('WebContainer sandbox created successfully!');
+        log(`URL: ${data.url}`);
+
+        const newParams = new URLSearchParams(searchParams.toString());
+        newParams.set('sandbox', data.sandboxId);
+        newParams.set('model', aiModel);
+        router.push(`/generation?${newParams.toString()}`, { scroll: false });
+
+        setTimeout(() => {
+          setShowLoadingBackground(false);
+        }, 1000);
+
+        if (!fromHomeScreen) {
+          addChatMessage('WebContainer is ready. The app now runs locally in your browser, no remote sandbox required.', 'system');
+        }
+
+        setTimeout(() => {
+          if (iframeRef.current) {
+            iframeRef.current.src = data.url;
+          }
+        }, 100);
+
+        return data;
+      }
+
       const response = await fetch('/api/create-ai-sandbox-v2', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -660,8 +707,88 @@ Tip: I automatically detect and install npm packages from your code imports (lik
         (window as any).pendingPackages = [];
       }
       
-      // Use streaming endpoint for real-time feedback
       const effectiveSandboxData = overrideSandboxData || sandboxData;
+
+      if (isWebContainerRuntime) {
+        const activeSandboxData = effectiveSandboxData || await createSandbox(true);
+        if (!activeSandboxData) {
+          throw new Error('WebContainer is not ready');
+        }
+
+        setCodeApplicationState({
+          stage: pendingPackages.length > 0 ? 'installing' : 'applying',
+          packages: pendingPackages,
+        });
+
+        const data = await applyCodeToWebContainer(code, pendingPackages, (message) => {
+          log(message);
+        });
+
+        const { results } = data;
+
+        if (results.packagesInstalled?.length > 0) {
+          log(`Packages installed: ${results.packagesInstalled.join(', ')}`);
+        }
+
+        if (results.filesCreated?.length > 0) {
+          log('Files created:');
+          results.filesCreated.forEach((file: string) => log(`  ${file}`, 'command'));
+        }
+
+        if (results.filesUpdated?.length > 0) {
+          log('Files updated:');
+          results.filesUpdated.forEach((file: string) => log(`  ${file}`, 'command'));
+        }
+
+        if (results.errors?.length > 0) {
+          results.errors.forEach((err: string) => log(err, 'error'));
+        }
+
+        if (data.structure) {
+          displayStructure(data.structure);
+        }
+
+        if (data.explanation) {
+          log(data.explanation);
+        }
+
+        setConversationContext(prev => ({
+          ...prev,
+          appliedCode: [...prev.appliedCode, {
+            files: [...(results.filesCreated || []), ...(results.filesUpdated || [])],
+            timestamp: new Date()
+          }]
+        }));
+
+        const updatedFiles = await listWebContainerFiles();
+        setSandboxFiles(updatedFiles.files);
+        setFileStructure(updatedFiles.structure);
+
+        setCodeApplicationState({ stage: 'complete' });
+        setTimeout(() => setCodeApplicationState({ stage: null }), 1500);
+
+        const appliedCount = (results.filesCreated?.length || 0) + (results.filesUpdated?.length || 0);
+        addChatMessage(
+          isEdit
+            ? 'Edit applied in WebContainer.'
+            : `Applied ${appliedCount} files in WebContainer.`,
+          'system',
+          { appliedFiles: [...(results.filesCreated || []), ...(results.filesUpdated || [])] },
+        );
+
+        if (results.packagesFailed?.length > 0) {
+          addChatMessage(`Some packages failed to install: ${results.packagesFailed.join(', ')}`, 'system');
+        }
+
+        if (iframeRef.current && activeSandboxData.url) {
+          iframeRef.current.src = `${activeSandboxData.url}?t=${Date.now()}&webcontainer=true`;
+        }
+
+        log('Code applied successfully!');
+        return;
+      }
+
+      // Use streaming endpoint for real-time feedback
       const response = await fetch('/api/apply-ai-code-stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1088,6 +1215,18 @@ Tip: I automatically detect and install npm packages from your code imports (lik
 
   const fetchSandboxFiles = async () => {
     if (!sandboxData) return;
+
+    if (isWebContainerRuntime) {
+      try {
+        const data = await listWebContainerFiles();
+        setSandboxFiles(data.files);
+        setFileStructure(data.structure);
+        console.log('[fetchSandboxFiles] Updated WebContainer file list:', Object.keys(data.files).length, 'files');
+      } catch (error) {
+        console.error('[fetchSandboxFiles] Error reading WebContainer files:', error);
+      }
+      return;
+    }
     
     try {
       const response = await fetch('/api/get-sandbox-files', {
@@ -1619,8 +1758,8 @@ Tip: I automatically detect and install npm packages from your code imports (lik
               src={sandboxData.url}
               className="w-full h-full border-none"
               title="Creative Sandbox"
-              allow="clipboard-write"
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+              allow={isWebContainerRuntime ? 'cross-origin-isolated; clipboard-write' : 'clipboard-write'}
+              sandbox={isWebContainerRuntime ? undefined : 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals'}
             />
             
             {/* Package installation overlay - shows when installing packages or applying code */}
@@ -2180,6 +2319,22 @@ Tip: I automatically detect and install npm packages from your code imports (lik
     addChatMessage('Creating ZIP file of your Vite app...', 'system');
     
     try {
+      if (isWebContainerRuntime) {
+        const blob = await exportWebContainerZip();
+        const dataUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = 'creative-webcontainer-project.zip';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(dataUrl);
+
+        log('Zip file created!');
+        addChatMessage('ZIP file created from WebContainer. Download started.', 'system');
+        return;
+      }
+
       const response = await fetch('/api/create-zip', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2194,7 +2349,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
         
         const link = document.createElement('a');
         link.href = data.dataUrl;
-        link.download = data.fileName || 'e2b-project.zip';
+        link.download = data.fileName || 'creative-project.zip';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

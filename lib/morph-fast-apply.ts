@@ -82,7 +82,7 @@ async function readFileFromSandbox(sandbox: any, normalizedPath: string, fullPat
     return (global as any).sandboxState.fileCache.files[normalizedPath].content as string;
   }
 
-  // Try E2B files API
+  // Try a sandbox file API
   if (sandbox?.files?.read) {
     return await sandbox.files.read(fullPath);
   }
@@ -139,7 +139,7 @@ async function writeFileToSandbox(sandbox: any, normalizedPath: string, fullPath
     return;
   }
 
-  // Prefer E2B files API
+  // Prefer a sandbox file API
   if (sandbox?.files?.write) {
     await sandbox.files.write(fullPath, content);
   } else if (sandbox?.runCode) {
@@ -215,5 +215,4 @@ export async function applyMorphEditToFile(params: {
     return { success: false, error: (error as Error).message };
   }
 }
-
 

@@ -378,7 +378,6 @@ export default defineConfig({
     strictPort: true,
     allowedHosts: [
       '.vercel.run',  // Allow all Vercel sandbox domains
-      '.e2b.dev',     // Allow all E2B sandbox domains
       'localhost'
     ],
     hmr: {

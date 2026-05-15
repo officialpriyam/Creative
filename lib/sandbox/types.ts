@@ -7,7 +7,7 @@ export interface SandboxFile {
 export interface SandboxInfo {
   sandboxId: string;
   url: string;
-  provider: 'e2b' | 'vercel';
+  provider: 'webcontainer' | 'vercel';
   createdAt: Date;
 }
 
@@ -30,11 +30,6 @@ export type SandboxCommand =
     };
 
 export interface SandboxProviderConfig {
-  e2b?: {
-    apiKey: string;
-    timeoutMs?: number;
-    template?: string;
-  };
   vercel?: {
     teamId?: string;
     projectId?: string;

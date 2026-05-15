@@ -2,6 +2,9 @@
 // This file contains all configurable settings for the application
 
 export const appConfig = {
+  // Local browser runtime. WebContainer is the permanent sandbox provider.
+  sandboxProvider: 'webcontainer',
+
   // Vercel Sandbox Configuration
   vercelSandbox: {
     // Sandbox timeout in minutes
@@ -28,26 +31,6 @@ export const appConfig = {
     runtime: 'node22' // Available: node22, python3.13, v0-next-shadcn, cua-ubuntu-xfce
   },
 
-  // E2B Sandbox Configuration
-  e2b: {
-    // Sandbox timeout in minutes
-    timeoutMinutes: 30,
-
-    // Convert to milliseconds for E2B API
-    get timeoutMs() {
-      return this.timeoutMinutes * 60 * 1000;
-    },
-
-    // Development server port (E2B uses 5173 for Vite)
-    vitePort: 5173,
-
-    // Time to wait for Vite dev server to be ready (in milliseconds)
-    viteStartupDelay: 10000,
-
-    // Working directory in sandbox
-    workingDirectory: '/home/user/app',
-  },
-  
   // AI Model Configuration
   ai: {
     // Default AI model. Server routes resolve this to a configured free/free-tier provider.

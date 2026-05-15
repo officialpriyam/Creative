@@ -16,9 +16,9 @@ const program = new Command();
 
 program
   .name('create-creative')
-  .description('Create a new Creative project with your choice of sandbox provider')
+  .description('Create a new Creative project using StackBlitz WebContainer')
   .version('1.0.0')
-  .option('-s, --sandbox <provider>', 'Sandbox provider (e2b or vercel)')
+  .option('-s, --sandbox <provider>', 'Sandbox provider (webcontainer or vercel)')
   .option('-n, --name <name>', 'Project name')
   .option('-p, --path <path>', 'Installation path (defaults to current directory)')
   .option('--skip-install', 'Skip npm install')
@@ -46,9 +46,9 @@ async function main() {
   }
 
   // Validate sandbox provider
-  if (!['e2b', 'vercel'].includes(config.sandbox)) {
+  if (!['webcontainer', 'vercel'].includes(config.sandbox)) {
     console.error(chalk.red(`\n❌ Invalid sandbox provider: ${config.sandbox}`));
-    console.log(chalk.yellow('Valid options: e2b, vercel\n'));
+    console.log(chalk.yellow('Valid options: webcontainer, vercel\n'));
     process.exit(1);
   }
 

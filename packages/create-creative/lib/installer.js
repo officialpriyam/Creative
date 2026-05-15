@@ -13,7 +13,7 @@ export async function installer(config) {
     console.log(chalk.blue('\n📋 Dry run - would perform these actions:'));
     console.log(chalk.gray(`  - Create directory: ${projectPath}`));
     console.log(chalk.gray(`  - Copy base template files`));
-    console.log(chalk.gray(`  - Copy ${sandbox}-specific files`));
+    console.log(chalk.gray(`  - Configure ${sandbox} runtime`));
     console.log(chalk.gray(`  - Create .env file`));
     if (!skipInstall) {
       console.log(chalk.gray(`  - Run npm install`));
@@ -151,9 +151,9 @@ async function createEnvFile(projectPath, sandbox, answers) {
     envContent += `# SEARXNG_URL=http://localhost:8080\n\n`;
   }
   
-  if (sandbox === 'e2b') {
-    envContent += `# REQUIRED - E2B Sandboxes\n`;
-    envContent += `E2B_API_KEY=${answers.e2bApiKey || 'your_e2b_api_key_here'}\n\n`;
+  if (sandbox === 'webcontainer') {
+    envContent += `# StackBlitz WebContainer runs generated apps locally in the browser.\n`;
+    envContent += `# No remote sandbox key is required.\n\n`;
   } else if (sandbox === 'vercel') {
     envContent += `# REQUIRED - Vercel Sandboxes\n`;
     if (answers.vercelAuthMethod === 'oidc') {
@@ -216,10 +216,9 @@ async function createEnvExample(projectPath, sandbox) {
   envContent += `# Optional: set a self-hosted SearXNG endpoint to enable search terms.\n`;
   envContent += `# SEARXNG_URL=http://localhost:8080\n\n`;
   
-  if (sandbox === 'e2b') {
-    envContent += `# REQUIRED - Sandboxes for code execution\n`;
-    envContent += `# Get yours at https://e2b.dev\n`;
-    envContent += `E2B_API_KEY=your_e2b_api_key_here\n\n`;
+  if (sandbox === 'webcontainer') {
+    envContent += `# StackBlitz WebContainer runs generated apps locally in the browser.\n`;
+    envContent += `# No remote sandbox key is required.\n\n`;
   } else if (sandbox === 'vercel') {
     envContent += `# REQUIRED - Vercel Sandboxes\n`;
     envContent += `# Option 1: OIDC (automatic in Vercel environment)\n`;
@@ -255,18 +254,20 @@ async function updateAppConfig(projectPath, sandbox) {
   
   if (await fs.pathExists(configPath)) {
     let content = await fs.readFile(configPath, 'utf-8');
-    
-    // Add sandbox provider configuration
-    const sandboxConfig = `
+
+    if (/sandboxProvider:\s*['"][^'"]+['"]/.test(content)) {
+      content = content.replace(/sandboxProvider:\s*['"][^'"]+['"]/, `sandboxProvider: '${sandbox}'`);
+    } else {
+      const sandboxConfig = `
   // Sandbox Provider Configuration
-  sandboxProvider: process.env.SANDBOX_PROVIDER || '${sandbox}',
+  sandboxProvider: '${sandbox}',
 `;
-    
-    // Insert after the opening of appConfig
-    content = content.replace(
-      'export const appConfig = {',
-      `export const appConfig = {${sandboxConfig}`
-    );
+
+      content = content.replace(
+        'export const appConfig = {',
+        `export const appConfig = {${sandboxConfig}`
+      );
+    }
     
     await fs.writeFile(configPath, content);
   }
