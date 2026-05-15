@@ -25,12 +25,20 @@ pnpm install  # or npm install / yarn install
 # SEARXNG_URL=http://localhost:8080
 
 # =================================================================
-# AI PROVIDER - Choose your LLM
+# AI PROVIDER - free/auto default
 # =================================================================
-GEMINI_API_KEY=your_gemini_api_key        # https://aistudio.google.com/app/apikey
-ANTHROPIC_API_KEY=your_anthropic_api_key  # https://console.anthropic.com
-OPENAI_API_KEY=your_openai_api_key        # https://platform.openai.com
-GROQ_API_KEY=your_groq_api_key            # https://console.groq.com
+GROQ_API_KEY=your_groq_api_key                  # https://console.groq.com
+GEMINI_API_KEY=your_gemini_api_key              # https://aistudio.google.com/app/apikey
+OPENROUTER_API_KEY=your_openrouter_api_key      # https://openrouter.ai/keys
+
+# Optional paid/provider-specific keys
+ANTHROPIC_API_KEY=your_anthropic_api_key        # https://console.anthropic.com
+OPENAI_API_KEY=your_openai_api_key              # https://platform.openai.com
+
+# By default, Creative uses Auto Free Model:
+# GROQ_API_KEY -> openai/gpt-oss-20b
+# GEMINI_API_KEY -> google/gemini-2.5-flash-lite
+# OPENROUTER_API_KEY -> openrouter/free
 
 # =================================================================
 # FAST APPLY (Optional - for faster edits)

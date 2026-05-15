@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { parseMorphEdits, applyMorphEditToFile } from '@/lib/morph-fast-apply';
 import type { SandboxState } from '@/types/sandbox';
 import type { ConversationState } from '@/types/conversation';
+import { appConfig } from '@/config/app.config';
 
 declare global {
   var conversationState: ConversationState | null;
@@ -733,7 +734,7 @@ body {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               missingImports,
-              model: 'claude-sonnet-4-20250514'
+              model: appConfig.ai.defaultModel
             })
           }
         );

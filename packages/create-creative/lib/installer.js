@@ -166,9 +166,29 @@ async function createEnvFile(projectPath, sandbox, answers) {
     envContent += '\n';
   }
   
-  // Optional AI provider keys
-  envContent += `# OPTIONAL - AI Providers\n`;
+  // AI provider keys
+  envContent += `# AI Providers - free/auto default needs at least one\n`;
+
+  if (answers.groqApiKey) {
+    envContent += `GROQ_API_KEY=${answers.groqApiKey}\n`;
+  } else {
+    envContent += `# GROQ_API_KEY=your_groq_api_key_here\n`;
+  }
+
+  if (answers.geminiApiKey) {
+    envContent += `GEMINI_API_KEY=${answers.geminiApiKey}\n`;
+  } else {
+    envContent += `# GEMINI_API_KEY=your_gemini_api_key_here\n`;
+  }
+
+  if (answers.openrouterApiKey) {
+    envContent += `OPENROUTER_API_KEY=${answers.openrouterApiKey}\n`;
+  } else {
+    envContent += `# OPENROUTER_API_KEY=your_openrouter_api_key_here\n`;
+  }
   
+  envContent += `\n# Optional paid/provider-specific keys\n`;
+
   if (answers.anthropicApiKey) {
     envContent += `ANTHROPIC_API_KEY=${answers.anthropicApiKey}\n`;
   } else {
@@ -179,18 +199,6 @@ async function createEnvFile(projectPath, sandbox, answers) {
     envContent += `OPENAI_API_KEY=${answers.openaiApiKey}\n`;
   } else {
     envContent += `# OPENAI_API_KEY=your_openai_api_key_here\n`;
-  }
-  
-  if (answers.geminiApiKey) {
-    envContent += `GEMINI_API_KEY=${answers.geminiApiKey}\n`;
-  } else {
-    envContent += `# GEMINI_API_KEY=your_gemini_api_key_here\n`;
-  }
-  
-  if (answers.groqApiKey) {
-    envContent += `GROQ_API_KEY=${answers.groqApiKey}\n`;
-  } else {
-    envContent += `# GROQ_API_KEY=your_groq_api_key_here\n`;
   }
   
   await fs.writeFile(path.join(projectPath, '.env'), envContent);
@@ -221,15 +229,13 @@ async function createEnvExample(projectPath, sandbox) {
     envContent += `VERCEL_TOKEN=your_access_token\n\n`;
   }
   
-  envContent += `# OPTIONAL - AI Providers (need at least one)\n`;
-  envContent += `# Get yours at https://console.anthropic.com\n`;
-  envContent += `ANTHROPIC_API_KEY=your_anthropic_api_key_here\n\n`;
-  envContent += `# Get yours at https://platform.openai.com\n`;
-  envContent += `OPENAI_API_KEY=your_openai_api_key_here\n\n`;
-  envContent += `# Get yours at https://aistudio.google.com/app/apikey\n`;
-  envContent += `GEMINI_API_KEY=your_gemini_api_key_here\n\n`;
-  envContent += `# Get yours at https://console.groq.com\n`;
+  envContent += `# AI Providers - free/auto default needs at least one\n`;
   envContent += `GROQ_API_KEY=your_groq_api_key_here\n`;
+  envContent += `GEMINI_API_KEY=your_gemini_api_key_here\n`;
+  envContent += `OPENROUTER_API_KEY=your_openrouter_api_key_here\n\n`;
+  envContent += `# Optional paid/provider-specific keys\n`;
+  envContent += `ANTHROPIC_API_KEY=your_anthropic_api_key_here\n`;
+  envContent += `OPENAI_API_KEY=your_openai_api_key_here\n`;
   
   await fs.writeFile(path.join(projectPath, '.env.example'), envContent);
 }

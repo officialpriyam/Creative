@@ -145,10 +145,11 @@ export function getEnvPrompts(provider) {
     message: 'Select AI providers to configure:',
     when: (answers) => answers.addAiKeys,
     choices: [
-      { name: 'Anthropic (Claude)', value: 'anthropic' },
-      { name: 'OpenAI (GPT)', value: 'openai' },
-      { name: 'Google (Gemini)', value: 'gemini' },
-      { name: 'Groq', value: 'groq' }
+      { name: 'Groq free tier (GPT-OSS default)', value: 'groq' },
+      { name: 'Google Gemini free tier (Flash-Lite)', value: 'gemini' },
+      { name: 'OpenRouter free router', value: 'openrouter' },
+      { name: 'Anthropic (Claude, paid)', value: 'anthropic' },
+      { name: 'OpenAI (GPT, paid)', value: 'openai' }
     ]
   });
 
@@ -178,6 +179,13 @@ export function getEnvPrompts(provider) {
     name: 'groqApiKey',
     message: 'Groq API key:',
     when: (answers) => answers.aiProviders && answers.aiProviders.includes('groq')
+  });
+
+  prompts.push({
+    type: 'input',
+    name: 'openrouterApiKey',
+    message: 'OpenRouter API key:',
+    when: (answers) => answers.aiProviders && answers.aiProviders.includes('openrouter')
   });
 
   return prompts;

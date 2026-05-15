@@ -50,11 +50,18 @@ export const appConfig = {
   
   // AI Model Configuration
   ai: {
-    // Default AI model
-    defaultModel: 'openai/gpt-5',
+    // Default AI model. Server routes resolve this to a configured free/free-tier provider.
+    defaultModel: 'free/auto',
+    freeFallbackModel: 'llama-3.1-8b-instant',
     
     // Available models
     availableModels: [
+      'free/auto',
+      'openai/gpt-oss-20b',
+      'openai/gpt-oss-120b',
+      'llama-3.1-8b-instant',
+      'google/gemini-2.5-flash-lite',
+      'openrouter/free',
       'openai/gpt-5',
       'moonshotai/kimi-k2-instruct-0905',
       'anthropic/claude-sonnet-4-20250514',
@@ -63,14 +70,40 @@ export const appConfig = {
     
     // Model display names
     modelDisplayNames: {
-      'openai/gpt-5': 'GPT-5',
+      'free/auto': 'Auto Free Model',
+      'openai/gpt-oss-20b': 'GPT-OSS 20B (Groq Free Tier)',
+      'openai/gpt-oss-120b': 'GPT-OSS 120B (Groq Free Tier)',
+      'llama-3.1-8b-instant': 'Llama 3.1 8B (Groq Free Tier)',
+      'google/gemini-2.5-flash-lite': 'Gemini 2.5 Flash-Lite (Free Tier)',
+      'openrouter/free': 'OpenRouter Free Router',
+      'openai/gpt-5': 'GPT-5 (Paid)',
       'moonshotai/kimi-k2-instruct-0905': 'Kimi K2 (Groq)',
-      'anthropic/claude-sonnet-4-20250514': 'Sonnet 4',
-      'google/gemini-3-pro-preview': 'Gemini 3 Pro (Preview)'
+      'anthropic/claude-sonnet-4-20250514': 'Sonnet 4 (Paid)',
+      'google/gemini-3-pro-preview': 'Gemini 3 Pro Preview (Paid)'
     } as Record<string, string>,
     
     // Model API configuration
     modelApiConfig: {
+      'openai/gpt-oss-20b': {
+        provider: 'groq',
+        model: 'openai/gpt-oss-20b'
+      },
+      'openai/gpt-oss-120b': {
+        provider: 'groq',
+        model: 'openai/gpt-oss-120b'
+      },
+      'llama-3.1-8b-instant': {
+        provider: 'groq',
+        model: 'llama-3.1-8b-instant'
+      },
+      'google/gemini-2.5-flash-lite': {
+        provider: 'google',
+        model: 'gemini-2.5-flash-lite'
+      },
+      'openrouter/free': {
+        provider: 'openrouter',
+        model: 'openrouter/free'
+      },
       'moonshotai/kimi-k2-instruct-0905': {
         provider: 'groq',
         model: 'moonshotai/kimi-k2-instruct-0905'

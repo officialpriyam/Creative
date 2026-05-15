@@ -33,7 +33,11 @@ export async function POST(request: NextRequest) {
     });
 
     try {
-      const modelId = body.model || appConfig.ai.defaultModel;
+      const requestedModelId = body.model || appConfig.ai.defaultModel;
+      const modelId =
+        requestedModelId === appConfig.ai.defaultModel && body.image
+          ? "google/gemini-2.5-flash-lite"
+          : requestedModelId;
       const { client, actualModel } = getProviderForModel(modelId);
       const userContent: any = [
         {
